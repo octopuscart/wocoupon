@@ -286,7 +286,7 @@ class Api extends REST_Controller {
             $contact_no = $pvalue['contact_no'];
             $email = $pvalue['email'];
             $sender = "<table class='smalltabledetails'>"
-                    . "<tr><td>Name/td><td>$name</td></tr>"
+                    . "<tr><td>Name</td><td>$name</td></tr>"
                     . "<tr><td>Cont. No.</td><td>$contact_no</td></tr>"
                     . "<tr><td>Email</td><td>$email</td></tr>"
                     . "</table>";
