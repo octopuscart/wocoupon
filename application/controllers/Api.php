@@ -308,6 +308,7 @@ class Api extends REST_Controller {
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = $pvalue['amount'];
+             $temparray['payment_type'] = $pvalue['payment_type'];
             $temparray['edit'] = '<a href="' . site_url('ProductManager/edit_product/' . $pvalue['id']) . '" class="btn btn-danger"><i class="fa fa-edit"></i> Edit</a>';
 
             array_push($return_array, $temparray);
