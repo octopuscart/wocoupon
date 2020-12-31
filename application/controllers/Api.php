@@ -214,6 +214,44 @@ class Api extends REST_Controller {
         echo rand(1000, 9999);
     }
 
+    function getCouponImage_get($couponcodehas) {
+        $this->db->where('coupon_code_hash', $couponcodehas); //set column_name and value in which row need to update
+        $query = $this->db->get('coupon_code');
+        $coupondata = $query->row();
+        if ($coupondata) {
+            header('Content-type: image/jpeg');
+            $font_path1 = APPPATH . "../assets/card/fonts/ABeeZee-Regular.otf";
+
+            $jpg_image = imagecreatefromjpeg(APPPATH . "../assets/images/coupon100.jpg");
+            $white = imagecolorallocate($jpg_image, 0, 0, 0);
+            $useremail = $this->input->get('client_email');
+
+            $image_width = imagesx($jpg_image);
+            $image_height = imagesy($jpg_image);
+
+            $text_box = imagettfbbox(30, 0, $font_path1, $coupondata->coupon_code);
+
+            $text_width = $text_box[2] - $text_box[0];
+            $text_height = $text_box[7] - $text_box[1];
+
+// Calculate coordinates of the text
+            $x = ($image_width / 2) - ($text_width / 2);
+            $y = ($image_height / 2) - ($text_height / 2);
+
+// Add some shadow to the text
+            imagettftext($jpg_image, 30, 0, $x+7, 252, $white, $font_path1, $coupondata->coupon_code);
+
+//            imagettftext($jpg_image, 30, 0, 645, 250, $white, $font_path1, $coupondata->coupon_code);
+            // Output the image
+            imagejpeg($jpg_image);
+        } else {
+            echo "No Data Found";
+        }
+
+// Free up memory
+//        imagedestroy($jpg_image);
+    }
+
 }
 
 ?>
