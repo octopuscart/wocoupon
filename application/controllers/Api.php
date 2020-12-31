@@ -309,7 +309,7 @@ class Api extends REST_Controller {
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = $pvalue['amount'];
             $temparray['payment_type'] = $pvalue['payment_type'];
-            $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
+            $temparray['edit'] = '<button  class="btn btn-danger" onclick="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
 
             array_push($return_array, $temparray);
         }
