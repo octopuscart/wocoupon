@@ -261,10 +261,33 @@ class Api extends REST_Controller {
     }
 
     function getCouponDataTable_get($couponsource) {
-        $this->db->where("coupon_for", $couponsource);
-        $query = $this->db->get('coupon_code');
-        $coupondata = $query->result_array();
-        $this->response($coupondata);
+        $draw = intval($this->input->get("draw"));
+        $start = intval($this->input->get("start"));
+        $length = intval($this->input->get("length"));
+
+        $searchqry = "";
+
+        $search = $this->input->get("search")['value'];
+        if ($search) {
+            $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
+        }
+        $query = "select * from coupon_code where coupon_form = '$couponsource'  $searchqry  order by id desc limit  $start, $length";
+        $query2 = $this->db->query($query);
+        $couponlist = $query2->result_array();
+
+        $query = "select * from coupon_code where coupon_form = '$couponsource'  $searchqry  order by id desc";
+        $query3 = $this->db->query($query);
+   
+
+        $couponlist;
+        $output = array(
+            "draw" => $draw,
+            "recordsTotal" => $query3->num_rows(),
+            "recordsFiltered" => $query2->num_rows(),
+            "data" => $return_array
+        );
+
+        $this->response($output);
     }
 
 }
