@@ -253,10 +253,10 @@ class Api extends REST_Controller {
         imagedestroy($jpg_image);
     }
 
-    function getCouponData_get($couponsource) {
-        $this->db->where("coupon_for", $couponsource);
+    function getCouponData_get($coupon_id) {
+        $this->db->where("id", $coupon_id);
         $query = $this->db->get('coupon_code');
-        $coupondata = $query->result_array();
+        $coupondata = $query->row();
         $this->response($coupondata);
     }
 
@@ -290,11 +290,11 @@ class Api extends REST_Controller {
                     . "<tr><td>Cont. No.</td><td>$contact_no</td></tr>"
                     . "<tr><td>Email</td><td>$email</td></tr>"
                     . "</table>";
-            
+
             $name_receiver = $pvalue['name_receiver'];
             $contact_no_receiver = $pvalue['contact_no_receiver'];
             $email_receiver = $pvalue['email_receiver'];
-            
+
             $receiver = "<table class='smalltabledetails'>"
                     . "<tr><td>Name</td><td>$name_receiver</td></tr>"
                     . "<tr><td>Cont. No.</td><td>$contact_no_receiver</td></tr>"
@@ -304,12 +304,12 @@ class Api extends REST_Controller {
             $temparray['sender'] = $sender;
             $temparray['receiver'] = $receiver;
 
-            $temparray['coupon_code'] = "<b>".$pvalue['coupon_code']."</b>";
+            $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = $pvalue['amount'];
-             $temparray['payment_type'] = $pvalue['payment_type'];
-            $temparray['edit'] = '<a href="' . site_url('ProductManager/edit_product/' . $pvalue['id']) . '" class="btn btn-danger"><i class="fa fa-edit"></i> Edit</a>';
+            $temparray['payment_type'] = $pvalue['payment_type'];
+            $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
 
             array_push($return_array, $temparray);
         }
