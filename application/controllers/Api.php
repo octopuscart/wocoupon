@@ -200,6 +200,7 @@ class Api extends REST_Controller {
 
         $insertArray = array(
             "coupon_id" => $last_id,
+            "email" => "",
             "status" => "Payment Success",
             "remark" => "Coupon has been purchased",
             'date' => date('Y-m-d'),
@@ -278,6 +279,8 @@ class Api extends REST_Controller {
         $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc";
         $query3 = $this->db->query($query);
         $return_array = array();
+
+
         foreach ($couponlist as $pkey => $pvalue) {
             $temparray = array();
             $temparray['s_n'] = $pkey + 1;
@@ -311,7 +314,19 @@ class Api extends REST_Controller {
             $temparray['payment_type'] = $pvalue['payment_type'];
             $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
 
-            array_push($return_array, $temparray);
+
+            $coupon_id = $pvalue['id'];
+            $this->db->where("id", $coupon_id);
+            $this->db->where("status", "Used");
+            $query = $this->db->get('coupon_code_status');
+            $couponstatusdata = $query->row();
+
+            $temparray['status'] = $pvalue['status'];
+            if ($couponstatusdata->status == 'Used') {
+                $temparray['status'] = $pvalue['status'];
+            } else {
+                array_push($return_array, $temparray);
+            }
         }
 
         $couponlist;
@@ -323,6 +338,24 @@ class Api extends REST_Controller {
         );
 
         $this->response($output);
+    }
+
+    function couponUse_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        $email = $this->post('email');
+        $remark = $this->post('remark');
+        $coupon_id = $this->post('coupon_id');
+        $insertArray = array(
+            "coupon_id" => $coupon_id,
+            "email" => $email,
+            "status" => "Used",
+            "remark" => $remark,
+            'date' => date('Y-m-d'),
+            'time' => date('H:i:s'),
+        );
+        $this->db->insert("coupon_code_status", $insertArray);
     }
 
 }
