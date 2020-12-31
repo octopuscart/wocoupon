@@ -183,7 +183,7 @@ class Api extends REST_Controller {
         unset($coupondata['id']);
         $prefix = $coupondata['prefix'];
         unset($coupondata['prefix']);
-        
+
         $possible_letters = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
         $code = '';
@@ -192,10 +192,21 @@ class Api extends REST_Controller {
             $code .= substr($possible_letters, mt_rand(0, strlen($possible_letters) - 1), 1);
             $i++;
         }
-        $code = $prefix.$code.$id;
+        $code = $prefix . $code . $id;
         $coupondata['coupon_code'] = $code;
         $coupondata['coupon_code_hash'] = md5($code);
         $this->db->insert("coupon_code", $coupondata);
+        $last_id = $this->db->insert_id();
+
+        $insertArray = array(
+            "coupon_id" => $last_id,
+            "status" => "Payment Success",
+            "remark" => "Coupon has been purchased",
+            'date' => date('Y-m-d'),
+            'time' => date('H:i:s'),
+        );
+        $this->db->insert("coupon_code_status", $insertArray);
+
         $this->response($coupondata['coupon_code_hash']);
     }
 
