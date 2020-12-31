@@ -282,7 +282,7 @@ class Api extends REST_Controller {
             $temparray = array();
             $temparray['s_n'] = $pkey + 1;
 
-            $temparray['name'] = $pvalue['sku'];
+            $temparray['name'] = $pvalue['name'];
             $temparray['contact_no'] = $pvalue['contact_no'];
             $temparray['email'] = $pvalue['email'];
 
