@@ -296,7 +296,7 @@ class Api extends REST_Controller {
             $email_receiver = $pvalue['email_receiver'];
             
             $receiver = "<table class='smalltabledetails'>"
-                    . "<tr><td>Name/td><td>$name_receiver</td></tr>"
+                    . "<tr><td>Name</td><td>$name_receiver</td></tr>"
                     . "<tr><td>Cont. No.</td><td>$contact_no_receiver</td></tr>"
                     . "<tr><td>Email</td><td>$email_receiver</td></tr>"
                     . "</table>";
@@ -304,7 +304,7 @@ class Api extends REST_Controller {
             $temparray['sender'] = $sender;
             $temparray['receiver'] = $receiver;
 
-            $temparray['coupon_code'] = $pvalue['coupon_code'];
+            $temparray['coupon_code'] = "<b>".$pvalue['coupon_code']."</b>";
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = $pvalue['amount'];
