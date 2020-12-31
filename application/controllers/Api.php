@@ -230,7 +230,7 @@ class Api extends REST_Controller {
             $image_height = imagesy($jpg_image);
 
             $text_box = imagettfbbox(30, 0, $font_path1, $coupondata->coupon_code);
-            
+
 
             $text_width = $text_box[2] - $text_box[0];
             $text_height = $text_box[7] - $text_box[1];
@@ -250,7 +250,21 @@ class Api extends REST_Controller {
         }
 
 // Free up memory
-//        imagedestroy($jpg_image);
+        imagedestroy($jpg_image);
+    }
+
+    function getCouponData_get($couponsource) {
+        $this->db->where("coupon_for", $couponsource);
+        $query = $this->db->get('coupon_code');
+        $coupondata = $query->result_array();
+        $this->response($coupondata);
+    }
+
+    function getCouponDataTable_get($couponsource) {
+        $this->db->where("coupon_for", $couponsource);
+        $query = $this->db->get('coupon_code');
+        $coupondata = $query->result_array();
+        $this->response($coupondata);
     }
 
 }
