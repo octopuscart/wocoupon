@@ -282,14 +282,27 @@ class Api extends REST_Controller {
             $temparray = array();
             $temparray['s_n'] = $pkey + 1;
 
-            $temparray['name'] = $pvalue['name'];
-            $temparray['contact_no'] = $pvalue['contact_no'];
-            $temparray['email'] = $pvalue['email'];
+            $name = $pvalue['name'];
+            $contact_no = $pvalue['contact_no'];
+            $email = $pvalue['email'];
+            $sender = "<table class='smalltabledetails'>"
+                    . "<tr><td>Name/td><td>$name</td></tr>"
+                    . "<tr><td>Cont. No.</td><td>$contact_no</td></tr>"
+                    . "<tr><td>Email</td><td>$email</td></tr>"
+                    . "</table>";
+            
+            $name_receiver = $pvalue['name_receiver'];
+            $contact_no_receiver = $pvalue['contact_no_receiver'];
+            $email_receiver = $pvalue['email_receiver'];
+            
+            $receiver = "<table class='smalltabledetails'>"
+                    . "<tr><td>Name/td><td>$name_receiver</td></tr>"
+                    . "<tr><td>Cont. No.</td><td>$contact_no_receiver</td></tr>"
+                    . "<tr><td>Email</td><td>$email_receiver</td></tr>"
+                    . "</table>";
 
-            $temparray['name_receiver'] = $pvalue['name_receiver'];
-            $temparray['contact_no_receiver'] = $pvalue['contact_no_receiver'];
-            $temparray['email_receiver'] = $pvalue['email_receiver'];
-
+            $temparray['sender'] = $sender;
+            $temparray['receiver'] = $receiver;
 
             $temparray['coupon_code'] = $pvalue['coupon_code'];
 
