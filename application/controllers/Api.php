@@ -230,6 +230,7 @@ class Api extends REST_Controller {
             $image_height = imagesy($jpg_image);
 
             $text_box = imagettfbbox(30, 0, $font_path1, $coupondata->coupon_code);
+            
 
             $text_width = $text_box[2] - $text_box[0];
             $text_height = $text_box[7] - $text_box[1];
@@ -239,9 +240,9 @@ class Api extends REST_Controller {
             $y = ($image_height / 2) - ($text_height / 2);
 
 // Add some shadow to the text
-            imagettftext($jpg_image, 30, 0, $x+7, 252, $white, $font_path1, $coupondata->coupon_code);
+            imagettftext($jpg_image, 30, 0, $x + 7, 252, $white, $font_path1, $coupondata->coupon_code);
 
-//            imagettftext($jpg_image, 30, 0, 645, 250, $white, $font_path1, $coupondata->coupon_code);
+            imagettftext($jpg_image, 15, 0, 670, 200, $white, $font_path1, "Your Coupon Code");
             // Output the image
             imagejpeg($jpg_image);
         } else {
