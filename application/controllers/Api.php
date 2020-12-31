@@ -271,13 +271,34 @@ class Api extends REST_Controller {
         if ($search) {
             $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
         }
-        $query = "select * from coupon_code where coupon_form = '$couponsource'  $searchqry  order by id desc limit  $start, $length";
+        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc limit  $start, $length";
         $query2 = $this->db->query($query);
         $couponlist = $query2->result_array();
 
-        $query = "select * from coupon_code where coupon_form = '$couponsource'  $searchqry  order by id desc";
+        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc";
         $query3 = $this->db->query($query);
-   
+        $return_array = array();
+        foreach ($couponlist as $pkey => $pvalue) {
+            $temparray = array();
+            $temparray['s_n'] = $pkey + 1;
+
+            $temparray['name'] = $pvalue['sku'];
+            $temparray['contact_no'] = $pvalue['contact_no'];
+            $temparray['email'] = $pvalue['email'];
+
+            $temparray['name_receiver'] = $pvalue['name_receiver'];
+            $temparray['contact_no_receiver'] = $pvalue['contact_no_receiver'];
+            $temparray['email_receiver'] = $pvalue['email_receiver'];
+
+
+            $temparray['coupon_code'] = $pvalue['coupon_code'];
+
+            $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
+            $temparray['amount'] = $pvalue['amount'];
+            $temparray['edit'] = '<a href="' . site_url('ProductManager/edit_product/' . $pvalue['id']) . '" class="btn btn-danger"><i class="fa fa-edit"></i> Edit</a>';
+
+            array_push($return_array, $temparray);
+        }
 
         $couponlist;
         $output = array(
