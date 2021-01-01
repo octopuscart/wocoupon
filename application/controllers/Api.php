@@ -320,8 +320,8 @@ class Api extends REST_Controller {
             $this->db->where("status", "Used");
             $query = $this->db->get('coupon_code_status');
             $couponstatusdata = $query->result_array();
-            
-                $temparray['status'] = $pvalue['status'];
+
+            $temparray['status'] = $pvalue['status'];
             if ($couponstatusdata) {
                 
             } else {
@@ -356,6 +356,69 @@ class Api extends REST_Controller {
             'time' => date('H:i:s'),
         );
         $this->db->insert("coupon_code_status", $insertArray);
+    }
+
+    function getCouponDataTableReport_get($couponsource) {
+        $draw = intval($this->input->get("draw"));
+        $start = intval($this->input->get("start"));
+        $length = intval($this->input->get("length"));
+
+        $searchqry = "";
+
+        $search = $this->input->get("search")['value'];
+        if ($search) {
+            $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
+        }
+        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc limit  $start, $length";
+        $query2 = $this->db->query($query);
+        $couponlist = $query2->result_array();
+
+        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc";
+        $query3 = $this->db->query($query);
+        $return_array = array();
+
+
+        foreach ($couponlist as $pkey => $pvalue) {
+            $temparray = array();
+            $temparray['s_n'] = $pkey + 1;
+
+           
+
+            $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
+
+            $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
+            $temparray['amount'] = $pvalue['amount'];
+            $temparray['payment_type'] = $pvalue['payment_type'];
+            $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
+
+
+            $coupon_id = $pvalue['id'];
+            $this->db->where("coupon_id", $coupon_id);
+            $this->db->where("status", "Used");
+            $this->db->order_by("id desc");
+            $query = $this->db->get('coupon_code_status');
+            $couponstatusdata = $query->result_array();
+
+            $temparray['status'] = $pvalue['status'];
+            if ($couponstatusdata) {
+                $coupondata = $couponstatusdata[0];
+                $temparray['remark'] = $coupondata['remark'];
+                $temparray["used_email"] = $coupondata["email"];
+                array_push($return_array, $temparray);
+            } else {
+                
+            }
+        }
+
+        $couponlist;
+        $output = array(
+            "draw" => $draw,
+            "recordsTotal" => $query3->num_rows(),
+            "recordsFiltered" => $query2->num_rows(),
+            "data" => $return_array
+        );
+
+        $this->response($output);
     }
 
 }
