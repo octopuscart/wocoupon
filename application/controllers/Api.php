@@ -316,8 +316,7 @@ class Api extends REST_Controller {
 
 
             $coupon_id = $pvalue['id'];
-            $this->db->where("id", $coupon_id);
-            $this->db->where("status", "Used");
+            $this->db->where(array("id"=> $coupon_id, "status"=> "Used"));
             $query = $this->db->get('coupon_code_status');
             $couponstatusdata = $query->row();
 
