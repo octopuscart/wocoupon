@@ -272,11 +272,11 @@ class Api extends REST_Controller {
         if ($search) {
             $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
         }
-        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc limit  $start, $length";
+        $query = "select * from coupon_code where 1  $searchqry  order by id desc limit  $start, $length";
         $query2 = $this->db->query($query);
         $couponlist = $query2->result_array();
 
-        $query = "select * from coupon_code where coupon_for = '$couponsource'  $searchqry  order by id desc";
+        $query = "select * from coupon_code where 1  $searchqry  order by id desc";
         $query3 = $this->db->query($query);
         $return_array = array();
 
