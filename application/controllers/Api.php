@@ -322,8 +322,12 @@ class Api extends REST_Controller {
             $couponstatusdata = $query->row();
 
             $temparray['status'] = $pvalue['status'];
-            if ($couponstatusdata->status == 'Used') {
-                $temparray['status'] = $pvalue['status'];
+            if ($couponstatusdata) {
+                if ($couponstatusdata->status == 'Used') {
+                    $temparray['status'] = $pvalue['status'];
+                } else {
+                    array_push($return_array, $temparray);
+                }
             } else {
                 array_push($return_array, $temparray);
             }
