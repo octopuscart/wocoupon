@@ -316,11 +316,12 @@ class Api extends REST_Controller {
 
 
             $coupon_id = $pvalue['id'];
-            $this->db->where(array("id"=> $coupon_id, "status"=> "Used"));
+            $this->db->where("coupon_id", $coupon_id);
+            $this->db->where("status", "Used");
             $query = $this->db->get('coupon_code_status');
-            $couponstatusdata = $query->row();
-
-            $temparray['status'] = $pvalue['status'];
+            $couponstatusdata = $query->result_array();
+            
+                $temparray['status'] = $pvalue['status'];
             if ($couponstatusdata) {
                 
             } else {
