@@ -184,31 +184,46 @@ class Api extends REST_Controller {
         $prefix = $coupondata['prefix'];
         unset($coupondata['prefix']);
 
-        $possible_letters = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $quantity = $coupondata['quantity'];
+        $request_id = $coupondata['request_id'];
 
-        $code = '';
-        $i = 0;
-        while ($i < 6) {
-            $code .= substr($possible_letters, mt_rand(0, strlen($possible_letters) - 1), 1);
-            $i++;
+        $couponhaslist = array();
+
+        for ($k = 0; $k < $quantity; $k++) {
+
+            $possible_letters = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $code = '';
+            $i = 0;
+            while ($i < 6) {
+                $code .= substr($possible_letters, mt_rand(0, strlen($possible_letters) - 1), 1);
+                $i++;
+            }
+            $code = $prefix . $code . $id;
+            $coupondata['coupon_code'] = $code;
+            $coupondata['coupon_code_hash'] = md5($request_id);
+            $this->db->insert("coupon_code", $coupondata);
+            $last_id = $this->db->insert_id();
+            $insertArray = array(
+                "coupon_id" => $last_id,
+                "email" => "",
+                "status" => "Payment Success",
+                "remark" => "Coupon has been purchased",
+                'date' => date('Y-m-d'),
+                'time' => date('H:i:s'),
+            );
+            $this->db->insert("coupon_code_status", $insertArray);
+            array_push($couponhaslist, $coupondata['coupon_code']);
         }
-        $code = $prefix . $code . $id;
-        $coupondata['coupon_code'] = $code;
-        $coupondata['coupon_code_hash'] = md5($code);
-        $this->db->insert("coupon_code", $coupondata);
-        $last_id = $this->db->insert_id();
+        $hasArray = $coupondata['coupon_code_hash'];
+        $this->response($hasArray);
+    }
 
-        $insertArray = array(
-            "coupon_id" => $last_id,
-            "email" => "",
-            "status" => "Payment Success",
-            "remark" => "Coupon has been purchased",
-            'date' => date('Y-m-d'),
-            'time' => date('H:i:s'),
-        );
-        $this->db->insert("coupon_code_status", $insertArray);
-
-        $this->response($coupondata['coupon_code_hash']);
+    function generateCouponTest_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        $coupondata = $this->post();
+        $this->response($coupondata);
     }
 
     function testRend_get() {
@@ -218,32 +233,50 @@ class Api extends REST_Controller {
     function getCouponImage_get($couponcodehas) {
         $this->db->where('coupon_code_hash', $couponcodehas); //set column_name and value in which row need to update
         $query = $this->db->get('coupon_code');
-        $coupondata = $query->row();
+        $coupondata = $query->result();
+
+//        $coupondata = array_merge($coupondata, $coupondata);
+        $couponcodearray1 = array();
+        $couponcodearray2 = array();
+        $couponcodearray3 = array();
+        foreach ($coupondata as $key => $value) {
+            if ($key <= 4) {
+                array_push($couponcodearray1, $value->coupon_code);
+            }
+            if ($key > 4 && $key <= 9) {
+                array_push($couponcodearray2, $value->coupon_code);
+            }
+            if ($key > 9) {
+                array_push($couponcodearray3, $value->coupon_code);
+            }
+        }
+
+//        unset($couponcodearray3[4]);
+//        unset($couponcodearray3[3]);
+        $couponcode1 = implode(", ", $couponcodearray1);
+        $couponcode2 = implode(", ", $couponcodearray2);
+        $couponcode3 = implode(", ", $couponcodearray3);
+        $codearray = array(
+            "1" => array("text" => $couponcode1, "y" => "800"),
+            "2" => array("text" => $couponcode2, "y" => "840"),
+            "3" => array("text" => $couponcode3, "y" => "880")
+        );
+        $font_size = 25;
         if ($coupondata) {
             header('Content-type: image/jpeg');
             $font_path1 = APPPATH . "../assets/card/fonts/ABeeZee-Regular.otf";
-
             $jpg_image = imagecreatefromjpeg(APPPATH . "../assets/images/coupon100.jpg");
             $white = imagecolorallocate($jpg_image, 0, 0, 0);
             $useremail = $this->input->get('client_email');
-
             $image_width = imagesx($jpg_image);
             $image_height = imagesy($jpg_image);
-
-            $text_box = imagettfbbox(30, 0, $font_path1, $coupondata->coupon_code);
-
-
-            $text_width = $text_box[2] - $text_box[0];
-            $text_height = $text_box[7] - $text_box[1];
-
-// Calculate coordinates of the text
-            $x = ($image_width / 2) - ($text_width / 2);
-            $y = ($image_height / 2) - ($text_height / 2);
-
-// Add some shadow to the text
-            imagettftext($jpg_image, 30, 0, $x + 7, 252, $white, $font_path1, $coupondata->coupon_code);
-
-            imagettftext($jpg_image, 15, 0, 670, 200, $white, $font_path1, "Your Coupon Code");
+            foreach ($codearray as $key => $cvalue) {
+                $text_box = imagettfbbox($font_size, 0, $font_path1, $cvalue['text']);
+                $text_width = $text_box[2] - $text_box[0];
+                $x = ($image_width / 2) - ($text_width / 2);
+                imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
+            }
+            imagettftext($jpg_image, 15, 0, 670, 755, $white, $font_path1, "Your Coupon Code(s)");
             // Output the image
             imagejpeg($jpg_image);
         } else {
@@ -382,7 +415,7 @@ class Api extends REST_Controller {
             $temparray = array();
             $temparray['s_n'] = $pkey + 1;
 
-           
+
 
             $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
 
