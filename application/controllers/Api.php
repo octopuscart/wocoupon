@@ -428,7 +428,7 @@ class Api extends REST_Controller {
 
         foreach ($couponlist as $pkey => $pvalue) {
             $temparray = array();
-            $temparray['s_n'] = $pkey + 1;
+            $temparray['s_n'] = ($pkey + 1)*$start;
 
 
 
