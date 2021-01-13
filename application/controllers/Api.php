@@ -415,13 +415,13 @@ class Api extends REST_Controller {
 
         $search = $this->input->get("search")['value'];
         if ($search) {
-            $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
+            $searchqry = ' and cc.coupon_code like "%' . $search . '%" or cc.email like "%' . $search . '%" or cc.contact_no like "%' . $search . '%" or cc.name like "%' . $search . '%" ';
         }
-        $query = "select * from coupon_code where 1  $searchqry  order by id desc limit  $start, $length";
+        $query = "select cc.* from coupon_code as cc where cc.id not in (select ccs.coupon_id from coupon_code_status as ccs where ccs.status ='Used') $searchqry order by cc.id desc limit  $start, $length";
         $query2 = $this->db->query($query);
         $couponlist = $query2->result_array();
 
-        $query = "select * from coupon_code where 1  $searchqry  order by id desc";
+        $query = "select cc.* from coupon_code as cc where cc.id not in (select ccs.coupon_id from coupon_code_status as ccs where ccs.status ='Used') $searchqry order by cc.id desc";
         $query3 = $this->db->query($query);
         $return_array = array();
 
@@ -443,7 +443,7 @@ class Api extends REST_Controller {
 
             $coupon_id = $pvalue['id'];
             $this->db->where("coupon_id", $coupon_id);
-            $this->db->where("status", "Used");
+
             $this->db->order_by("id desc");
             $query = $this->db->get('coupon_code_status');
             $couponstatusdata = $query->result_array();
@@ -462,8 +462,8 @@ class Api extends REST_Controller {
         $couponlist;
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $query3->num_rows(),
-            "recordsFiltered" => $query2->num_rows(),
+            "recordsTotal" => $query2->num_rows(),
+            "recordsFiltered" => $query3->num_rows(),
             "data" => $return_array
         );
 
