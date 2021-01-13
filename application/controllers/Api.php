@@ -350,18 +350,7 @@ class Api extends REST_Controller {
             $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button>';
 
 
-            $coupon_id = $pvalue['id'];
-            $this->db->where("coupon_id", $coupon_id);
-            $this->db->where("status", "Used");
-            $query = $this->db->get('coupon_code_status');
-            $couponstatusdata = $query->result_array();
-
-            $temparray['status'] = $pvalue['status'];
-            if ($couponstatusdata) {
-                
-            } else {
-                array_push($return_array, $temparray);
-            }
+            
         }
 
         $couponlist;
