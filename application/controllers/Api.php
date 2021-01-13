@@ -303,13 +303,13 @@ class Api extends REST_Controller {
 
         $search = $this->input->get("search")['value'];
         if ($search) {
-            $searchqry = ' and coupon_code like "%' . $search . '%" or email like "%' . $search . '%" or name like "%' . $search . '%" ';
+            $searchqry = ' and cc.coupon_code like "%' . $search . '%" or cc.email like "%' . $search . '%" or cc.contact_no like "%' . $search . '%" or cc.name like "%' . $search . '%" ';
         }
-        $query = "select * from coupon_code where 1  $searchqry  order by id desc limit  $start, $length";
+      $query = "select * from (select cc.*, IF(ccs.status='Used', ccs.status, '') as cstatus from coupon_code as cc  LEFT join coupon_code_status as ccs on ccs.coupon_id = cc.id where 1 $searchqry) as coupon where cstatus!='Used'   order by id desc limit  $start, $length";
         $query2 = $this->db->query($query);
         $couponlist = $query2->result_array();
 
-        $query = "select * from coupon_code where 1  $searchqry  order by id desc";
+        $query = "select * from (select cc.*, IF(ccs.status='Used', ccs.status, '') as cstatus from coupon_code as cc  LEFT join coupon_code_status as ccs on ccs.coupon_id = cc.id where 1 $searchqry) as coupon where cstatus!='Used'   order by id desc";
         $query3 = $this->db->query($query);
         $return_array = array();
 
@@ -317,6 +317,8 @@ class Api extends REST_Controller {
         foreach ($couponlist as $pkey => $pvalue) {
             $temparray = array();
             $temparray['s_n'] = $pkey + 1;
+            $temparray["checkbox"] = '<input type="checkbox" name="coupon_id" class="coupon_id" value="' . $pvalue['coupon_code'] . '" ng-click="userCouponBulk()">';
+
 
             $name = $pvalue['name'];
             $contact_no = $pvalue['contact_no'];
@@ -343,7 +345,7 @@ class Api extends REST_Controller {
             $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
-            $temparray['amount'] = $pvalue['amount'];
+            $temparray['amount'] = 100.00;
             $temparray['payment_type'] = $pvalue['payment_type'];
             $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button>';
 
@@ -365,8 +367,8 @@ class Api extends REST_Controller {
         $couponlist;
         $output = array(
             "draw" => $draw,
-            "recordsTotal" => $query3->num_rows(),
-            "recordsFiltered" => $query2->num_rows(),
+            "recordsTotal" => $query2->num_rows(),
+            "recordsFiltered" => $query3->num_rows(),
             "data" => $return_array
         );
 
@@ -389,6 +391,29 @@ class Api extends REST_Controller {
             'time' => date('H:i:s'),
         );
         $this->db->insert("coupon_code_status", $insertArray);
+    }
+
+    function couponUseBulk_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        $email = $this->post('email');
+        $remark = $this->post('remark');
+        $coupon_id = $this->post('coupon_code');
+        foreach ($coupon_id as $key => $code) {
+            $this->db->where("coupon_code", $code);
+            $query = $this->db->get('coupon_code');
+            $coupondata = $query->row();
+            $insertArray = array(
+                "coupon_id" => $coupondata->id,
+                "email" => $email,
+                "status" => "Used",
+                "remark" => $remark,
+                'date' => date('Y-m-d'),
+                'time' => date('H:i:s'),
+            );
+            $this->db->insert("coupon_code_status", $insertArray);
+        }
     }
 
     function getCouponDataTableReport_get($couponsource) {
@@ -417,10 +442,11 @@ class Api extends REST_Controller {
 
 
 
+
             $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
-            $temparray['amount'] = $pvalue['amount'];
+            $temparray['amount'] = 100.00;
             $temparray['payment_type'] = $pvalue['payment_type'];
             $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Use Coupon</button>';
 
