@@ -428,7 +428,7 @@ class Api extends REST_Controller {
 
         foreach ($couponlist as $pkey => $pvalue) {
             $temparray = array();
-            $temparray['s_n'] = ($pkey + 1)+$start;
+            $temparray['s_n'] = ($pkey + 1) + $start;
 
 
 
@@ -468,6 +468,76 @@ class Api extends REST_Controller {
         );
 
         $this->response($output);
+    }
+
+    function checkLoyalProgram_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        $image = base_url() . "assets/images/loyaltyprogramthanks.jpg";
+        $data = array("status" => "300", "msg" => "", "image" => $image);
+        $join_code = $this->post("code_hash");
+        $this->db->where("join_code_hash", $join_code);
+        $query = $this->db->get("loyalty_program_join");
+        $user_check = $query->row();
+        if ($user_check) {
+            $data["status"] = "200";
+            $data["memberdata"] = $user_check;
+            $this->response($data);
+        } else {
+            $this->response($data);
+        }
+    }
+
+    function joinProgram_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+
+        $data = array("status" => "300", "msg" => "");
+        if ($this->post('email')) {
+            $email = $this->post('email');
+            $name = $this->post('name');
+            $contact_no = $this->post('contact_no');
+            $prefix = $this->post('prefix');
+            $join_from = $this->post("join_from");
+            $this->db->where("email", $email);
+            $query = $this->db->get("loyalty_program_join");
+            $user_check = $query->row();
+            if ($user_check) {
+                $data['msg'] = 'Email Address Already Registered.';
+                $data['status'] = "100";
+                $data['join_code_hash'] = $user_check->join_code_hash;
+            } else {
+                $possible_letters = '123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                $code = '';
+                $i = 0;
+                while ($i < 6) {
+                    $code .= substr($possible_letters, mt_rand(0, strlen($possible_letters) - 1), 1);
+                    $i++;
+                }
+                $code = $prefix . $code;
+                $codehash = md5($code);
+
+                $userarray = array(
+                    'name' => $name,
+                    'email' => $email,
+                    "contact_no" => $contact_no,
+                    "join_code" => $code,
+                    "join_from" => $join_from,
+                    "join_code_hash" => $codehash,
+                    'join_date' => date("Y-m-d"),
+                    'join_time' => date("h:i:s A"),
+                );
+
+                $this->db->insert('loyalty_program_join', $userarray);
+                $user_id = $this->db->insert_id();
+                $data['msg'] = 'Thank you for joining our loyalty profram.';
+                $data['status'] = "200";
+                $data['join_code_hash'] = $codehash;
+            }
+        }
+        $this->response($data);
     }
 
 }
