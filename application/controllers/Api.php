@@ -19,28 +19,28 @@ class Api extends REST_Controller {
     }
 
     private function useCurl($url, $headers, $fields = null) {
-        // Open connection
+// Open connection
         $ch = curl_init();
         if ($url) {
-            // Set the url, number of POST vars, POST data
+// Set the url, number of POST vars, POST data
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-            // Disabling SSL Certificate support temporarly
+// Disabling SSL Certificate support temporarly
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             if ($fields) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, $fields);
             }
 
-            // Execute post
+// Execute post
             $result = curl_exec($ch);
             if ($result === FALSE) {
                 die('Curl failed: ' . curl_error($ch));
             }
 
-            // Close connection
+// Close connection
             curl_close($ch);
 
             return $result;
@@ -114,16 +114,16 @@ class Api extends REST_Controller {
     public function iOS($data, $devicetoken) {
         $deviceToken = $devicetoken;
         $ctx = stream_context_create();
-        // ck.pem is your certificate file
+// ck.pem is your certificate file
         stream_context_set_option($ctx, 'ssl', 'local_cert', 'ck.pem');
         stream_context_set_option($ctx, 'ssl', 'passphrase', $this->passphrase);
-        // Open a connection to the APNS server
+// Open a connection to the APNS server
         $fp = stream_socket_client(
                 'ssl://gateway.sandbox.push.apple.com:2195', $err,
                 $errstr, 60, STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT, $ctx);
         if (!$fp)
             exit("Failed to connect: $err $errstr" . PHP_EOL);
-        // Create the payload body
+// Create the payload body
         $body['aps'] = array(
             'alert' => array(
                 'title' => $data['mtitle'],
@@ -131,14 +131,14 @@ class Api extends REST_Controller {
             ),
             'sound' => 'default'
         );
-        // Encode the payload as JSON
+// Encode the payload as JSON
         $payload = json_encode($body);
-        // Build the binary notification
+// Build the binary notification
         $msg = chr(0) . pack('n', 32) . pack('H*', $deviceToken) . pack('n', strlen($payload)) . $payload;
-        // Send it to the server
+// Send it to the server
         $result = fwrite($fp, $msg, strlen($msg));
 
-        // Close the connection to the server
+// Close the connection to the server
         fclose($fp);
         if (!$result)
             return 'Message not delivered' . PHP_EOL;
@@ -277,7 +277,7 @@ class Api extends REST_Controller {
                 imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
             }
             imagettftext($jpg_image, 15, 0, 670, 755, $white, $font_path1, "Your Coupon Code(s)");
-            // Output the image
+// Output the image
             imagejpeg($jpg_image);
         } else {
             echo "No Data Found";
@@ -489,6 +489,7 @@ class Api extends REST_Controller {
         }
     }
 
+// loyalty program 
     function joinProgram_post() {
         $this->config->load('rest', TRUE);
         header('Access-Control-Allow-Origin: *');
@@ -528,6 +529,7 @@ class Api extends REST_Controller {
                     "join_code_hash" => $codehash,
                     'join_date' => date("Y-m-d"),
                     'join_time' => date("h:i:s A"),
+                    'status' => 'active',
                 );
 
                 $this->db->insert('loyalty_program_join', $userarray);
@@ -538,6 +540,253 @@ class Api extends REST_Controller {
             }
         }
         $this->response($data);
+    }
+
+//loyaltiprogram billing
+    function calculateBilling($amount) {
+
+        $this->db->order_by("range2", "desc");
+        $this->db->limit(1);
+        $query = $this->db->get("loyalty_billing_slot");
+        $max_slot = $query->row();
+
+        $this->db->order_by("range2", "asc");
+        $this->db->limit(1);
+        $query = $this->db->get("loyalty_billing_slot");
+        $min_slot = $query->row();
+
+        $this->db->where("range2>", $amount);
+        $this->db->limit(1);
+        $query = $this->db->get("loyalty_billing_slot");
+        $avaible_slot = $query->row();
+        return $avaible_slot ? $avaible_slot : $max_slot;
+    }
+
+    function getAvailableSlot($amount) {
+        $avslot = $this->calculateBilling($amount);
+        $resultdata = array("slot" => $avslot);
+        $discountrate = $avslot->off_percent;
+        $discoutamount = ($amount * $discountrate) / 100;
+        $rawdiscount = round($discoutamount);
+        $expdiscount = explode(".", $rawdiscount);
+        $expdiscount = $rawdiscount;
+        $actdiscount = count($expdiscount) > 1 ? ($rawdiscount + 1) : $rawdiscount;
+        $resultdata["cal_amount"] = $actdiscount;
+        return $resultdata;
+    }
+
+    function createLoyaltiBilling_post() {
+        $order_amount = $this->post("order_amount");
+        $order_amount_act = $this->post("order_amount_act");
+        $order_no = $this->post("order_no");
+        $order_from = $this->post("order_from");
+        $prefix = $this->post("prefix");
+        $reimburse_id = "";
+        $member_id = $this->post("member_id");
+        $reimburse_status = $this->post("reimburse_status");
+        if ($reimburse_status == 'true') {
+            $reimburse_array = array(
+                "member_id" => $member_id,
+                "order_no" => $order_no,
+                "amount" => $this->post("reimburse_amount"),
+                "reimburse_from" => $order_from,
+                "order_amount" => $order_amount,
+                "order_amount_act" => $order_amount_act,
+                "remark" => $this->post("remark"),
+                "slot_id" => $this->post("slot_id"),
+                "slot_title" => $this->post("slot_title"),
+                "status" => $reimburse_status,
+                'reimburse_date' => date("Y-m-d"),
+                'reimburse_time' => date("h:i:s A"),
+            );
+            $this->db->insert('loyalty_order_reimburse', $reimburse_array);
+            $reimburse_id = $this->db->insert_id();
+
+            $this->db->where("member_id", $member_id);
+            $this->db->where("status", "credit");
+            $this->db->where("order_status", "active");
+            $this->db->set(array("status" => "debit", "debit_reimburse_id" => $reimburse_id));
+            $this->db->update("loyalty_order_billing");
+        }
+
+
+        $biling_array = array(
+            "member_id" => $member_id,
+            "order_no" => $order_no,
+            "order_from" => $order_from,
+            "order_date" => $this->post("order_date"),
+            "order_amount" => $order_amount,
+            "email" => $this->post("email"),
+            "contact_no" => $this->post("contact_no"),
+            "order_time" => $this->post("order_time"),
+            "order_type" => $this->post("order_type"),
+            "order_status" => $this->post("order_status"),
+            "status" => "credit",
+            "remark" => $this->post("remark"),
+            "slot_id" => $this->post("slot_id"),
+            "slot_title" => $this->post("slot_title"),
+            "reimburse_id" => $reimburse_id,
+            "debit_reimburse_id" => "",
+            "reimburse_amount" => $this->post("reimburse_amount"),
+            "reimburse_status" => $this->post("reimburse_status"),
+        );
+        $this->db->insert('loyalty_order_billing', $biling_array);
+    }
+
+//loyalprogram list
+    function getLoyaltyMemberDataTable_get() {
+        $draw = intval($this->input->get("draw"));
+        $start = intval($this->input->get("start"));
+        $length = intval($this->input->get("length"));
+        $searchqry = "";
+        $search = $this->input->get("search")['value'];
+        if ($search) {
+            $searchqry = ' and (email like "%' . $search . '%" or contact_no like "%' . $search . '%" or name like "%' . $search . '%" ) ';
+        }
+        $query = "select * from loyalty_program_join  where status='active' $searchqry order by id desc limit  $start, $length";
+        $query2 = $this->db->query($query);
+        $memberlist = $query2->result_array();
+
+        $query = "select * from loyalty_program_join  where status='active' $searchqry order by id desc ";
+        $query3 = $this->db->query($query);
+        $return_array = array();
+        foreach ($memberlist as $pkey => $pvalue) {
+            $temparray = $pvalue;
+            $temparray['s_n'] = ($pkey + 1) + $start;
+            $name = $pvalue['name'];
+            $join_from = $pvalue['join_from'];
+            $datetime = $pvalue['join_date'] . ' ' . $pvalue['join_time'];
+            $member = "<table class='smalltabledetails'>"
+                    . "<tr><td rowspan=3 style='width:40px;'><span class='fa-stack fa-lg'>
+                                                    <i class='fa fa-circle fa-stack-2x'></i>
+                                                    <i class='fa fa-user fa-stack-1x fa-inverse'></i>
+                                                </span>&nbsp;</td><td class='memeber_name'><b>$name</b></td></tr>"
+                    . "<tr class='smallfont10'><td>Joining Date:$datetime</td></tr>"
+                    . "<tr class='smallfont10'><td>Source:$join_from</td></tr>"
+                    . "</table>";
+            $temparray['member'] = $member;
+
+            $email = $pvalue['email'];
+            $contact = $pvalue['contact_no'];
+            $member = "<table class='smalltabledetails'>"
+                    . "<tr><td style='width:20px;'><i class='fa fa-envelope'></i></td><td class='memeber_email'><b>$email</b></td></tr>"
+                    . "<tr><td><i class='fa fa-phone'></i></td><td class='memeber_contact_no'><b>$contact</b></td></tr>"
+                    . "</table>";
+            $temparray['contact'] = $member;
+
+            $temparray['edit'] = '<button  class="btn btn-danger" id="selectmemeber' . $pvalue['id'] . '" ng-click="selectCustomer(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Select</button>';
+            array_push($return_array, $temparray);
+        }
+
+        $couponlist;
+        $output = array(
+            "draw" => $draw,
+            "recordsTotal" => $query2->num_rows(),
+            "recordsFiltered" => $query3->num_rows(),
+            "data" => $return_array
+        );
+        $this->response($output);
+    }
+
+    function getMemberOrderApplicableAmount($memeber_id) {
+        $this->db->select("sum(order_amount) as order_amount, count(id) as order_count");
+        $this->db->where("member_id", $memeber_id);
+        $this->db->where("order_status", "active");
+        $this->db->where("status", "credit");
+        $query = $this->db->get("loyalty_order_billing");
+        $order_amount = $query->row();
+        $amount = $order_amount->order_amount;
+        $ordercount = $order_amount->order_count;
+        $famount  = $amount ? $amount : 0;
+        return array("amount" => $famount, "count" => $ordercount);
+    }
+
+    function getMemberOrderAmountTotal($memeber_id) {
+        $this->db->select("sum(order_amount) as order_amount, count(id) as order_count");
+        $this->db->where("member_id", $memeber_id);
+        $this->db->where("order_status", "active");
+        $query = $this->db->get("loyalty_order_billing");
+        $order_amount = $query->row();
+        $amount = $order_amount->order_amount;
+        $famount = $amount ? $amount : 0;
+        $totalorder = $order_amount->order_count ? $order_amount->order_count : 0;
+        return array("amount" => $famount, "count" => $totalorder);
+    }
+
+    function getMemeberCalculationData_get($memeber_id) {
+        $amount = $this->getMemberOrderApplicableAmount($memeber_id)['amount'];
+        $calamount = $this->getAvailableSlot($amount);
+        $calamount['total_amount'] = $amount;
+        $this->response($calamount);
+    }
+
+    function getLoyaltyMemberDataTableReport_get() {
+        $draw = intval($this->input->get("draw"));
+        $start = intval($this->input->get("start"));
+        $length = intval($this->input->get("length"));
+        $searchqry = "";
+        $search = $this->input->get("search")['value'];
+        if ($search) {
+            $searchqry = ' and (email like "%' . $search . '%" or contact_no like "%' . $search . '%" or name like "%' . $search . '%" ) ';
+        }
+        $query = "select * from loyalty_program_join  where status='active' $searchqry order by id desc limit  $start, $length";
+        $query2 = $this->db->query($query);
+        $memberlist = $query2->result_array();
+
+        $query = "select * from loyalty_program_join  where status='active' $searchqry order by id desc ";
+        $query3 = $this->db->query($query);
+        $return_array = array();
+        foreach ($memberlist as $pkey => $pvalue) {
+            $temparray = $pvalue;
+            $temparray['s_n'] = ($pkey + 1) + $start;
+            $name = $pvalue['name'];
+
+            $total_order_amount = $this->getMemberOrderAmountTotal($pvalue['id']);
+            $applicable_order_amount = $this->getMemberOrderApplicableAmount($pvalue['id']);
+            
+            
+            $slot = $this->getAvailableSlot($applicable_order_amount['amount']);
+
+            $reimbersable_amount = $slot['cal_amount'];
+            $reimbersable_slot = $slot['slot']->title;
+
+            $temparray['applicableamount'] = "<b>".$applicable_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $applicable_order_amount['count'] . "</span>";
+            $temparray['total_order_amount'] = "<b>".$total_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $total_order_amount['count'] . "</span>";
+            $temparray['offer'] ="<b>". $reimbersable_amount . "</b><br/><span class='smallfont10 fullwidthspan'>" . $reimbersable_slot . "</span>";
+
+
+            $join_from = $pvalue['join_from'];
+            $datetime = $pvalue['join_date'] . ' ' . $pvalue['join_time'];
+            $member = "<table class='smalltabledetails'>"
+                    . "<tr><td rowspan=3 style='width:40px;'><span class='fa-stack fa-lg'>
+                                                    <i class='fa fa-circle fa-stack-2x'></i>
+                                                    <i class='fa fa-user fa-stack-1x fa-inverse'></i>
+                                                </span>&nbsp;</td><td class='memeber_name'><b>$name</b></td></tr>"
+                    . "<tr class='smallfont10'><td>Joining Date:$datetime</td></tr>"
+                    . "<tr class='smallfont10'><td>Source:$join_from</td></tr>"
+                    . "</table>";
+            $temparray['member'] = $member;
+
+            $email = $pvalue['email'];
+            $contact = $pvalue['contact_no'];
+            $member = "<table class='smalltabledetails'>"
+                    . "<tr><td style='width:20px;'><i class='fa fa-envelope'></i></td><td class='memeber_email'><b>$email</b></td></tr>"
+                    . "<tr><td><i class='fa fa-phone'></i></td><td class='memeber_contact_no'><b>$contact</b></td></tr>"
+                    . "</table>";
+            $temparray['contact'] = $member;
+
+            $temparray['edit'] = '<button  class="btn btn-danger" id="selectmemeber' . $pvalue['id'] . '" ng-click="selectCustomer(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Select</button>';
+            array_push($return_array, $temparray);
+        }
+
+        $couponlist;
+        $output = array(
+            "draw" => $draw,
+            "recordsTotal" => $query2->num_rows(),
+            "recordsFiltered" => $query3->num_rows(),
+            "data" => $return_array
+        );
+        $this->response($output);
     }
 
 }
