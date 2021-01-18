@@ -562,7 +562,7 @@ class Api extends REST_Controller {
         return $avaible_slot ? $avaible_slot : $max_slot;
     }
 
-    function getAvailableSlot($amount) {
+    function getAvailableSlot($amount, $memeber_id) {
         $avslot = $this->calculateBilling($amount);
         $resultdata = array("slot" => $avslot);
         $discountrate = $avslot->off_percent;
@@ -571,7 +571,17 @@ class Api extends REST_Controller {
         $expdiscount = explode(".", $rawdiscount);
         $expdiscount = $rawdiscount;
         $actdiscount = count($expdiscount) > 1 ? ($rawdiscount + 1) : $rawdiscount;
-        $resultdata["cal_amount"] = $actdiscount;
+
+        $this->db->select("sum(amount) as wallet_amount");
+        $this->db->where("member_id", $memeber_id);
+        $this->db->where("status", "credit");
+        $query = $this->db->get("loyalty_wallet");
+        $order_amount = $query->row();
+        $wallet_amount_t = $order_amount->wallet_amount;
+        $wallet_amount = $wallet_amount_t ? $wallet_amount_t : 0;
+        $resultdata["cal_amount"] = $actdiscount + $wallet_amount;
+        $resultdata["wallet_amount"] = $wallet_amount;
+        $resultdata["off_amount"] = $actdiscount;
         return $resultdata;
     }
 
@@ -601,6 +611,27 @@ class Api extends REST_Controller {
             );
             $this->db->insert('loyalty_order_reimburse', $reimburse_array);
             $reimburse_id = $this->db->insert_id();
+
+            $walletamont = $this->post("wallet_input");
+            $this->db->where("member_id", $member_id);
+            $this->db->where("status", "credit");
+            $this->db->set(array("status" => "debit", "reimburse_id" => $reimburse_id));
+            $this->db->update("loyalty_wallet");
+
+            $walletamont = $this->post("wallet_input");
+            $wallet_array = array(
+                "member_id" => $member_id,
+                "amount" => $this->post("wallet_input"),
+                "reimburse_id" => "",
+                "status" => "credit",
+                'date' => date("Y-m-d"),
+                'time' => date("h:i:s A"),
+            );
+            if ($walletamont) {
+                $this->db->insert('loyalty_wallet', $wallet_array);
+                $order_amount = 0;
+            }
+
 
             $this->db->where("member_id", $member_id);
             $this->db->where("status", "credit");
@@ -697,7 +728,7 @@ class Api extends REST_Controller {
         $order_amount = $query->row();
         $amount = $order_amount->order_amount;
         $ordercount = $order_amount->order_count;
-        $famount  = $amount ? $amount : 0;
+        $famount = $amount ? $amount : 0;
         return array("amount" => $famount, "count" => $ordercount);
     }
 
@@ -715,7 +746,7 @@ class Api extends REST_Controller {
 
     function getMemeberCalculationData_get($memeber_id) {
         $amount = $this->getMemberOrderApplicableAmount($memeber_id)['amount'];
-        $calamount = $this->getAvailableSlot($amount);
+        $calamount = $this->getAvailableSlot($amount, $memeber_id);
         $calamount['total_amount'] = $amount;
         $this->response($calamount);
     }
@@ -743,16 +774,16 @@ class Api extends REST_Controller {
 
             $total_order_amount = $this->getMemberOrderAmountTotal($pvalue['id']);
             $applicable_order_amount = $this->getMemberOrderApplicableAmount($pvalue['id']);
-            
-            
-            $slot = $this->getAvailableSlot($applicable_order_amount['amount']);
+
+
+            $slot = $this->getAvailableSlot($applicable_order_amount['amount'], $pvalue['id']);
 
             $reimbersable_amount = $slot['cal_amount'];
             $reimbersable_slot = $slot['slot']->title;
 
-            $temparray['applicableamount'] = "<b>".$applicable_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $applicable_order_amount['count'] . "</span>";
-            $temparray['total_order_amount'] = "<b>".$total_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $total_order_amount['count'] . "</span>";
-            $temparray['offer'] ="<b>". $reimbersable_amount . "</b><br/><span class='smallfont10 fullwidthspan'>" . $reimbersable_slot . "</span>";
+            $temparray['applicableamount'] = "<b>" . $applicable_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $applicable_order_amount['count'] . "</span>";
+            $temparray['total_order_amount'] = "<b>" . $total_order_amount['amount'] . "</b><br/><span class='smallfont10 fullwidthspan'>" . $total_order_amount['count'] . "</span>";
+            $temparray['offer'] = "<b>" . $reimbersable_amount . "</b><br/><span class='smallfont10 fullwidthspan'>" . $reimbersable_slot . "</span>";
 
 
             $join_from = $pvalue['join_from'];
