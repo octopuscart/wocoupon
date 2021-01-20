@@ -860,6 +860,45 @@ class Api extends REST_Controller {
         }
     }
 
+    function createLoyaltiBillingFromWebsite_post() {
+        $email = $this->post("email");
+        $order_amount = $this->post("order_amount");
+        $order_no = $this->post("order_no");
+        $order_from = $this->post("order_from");
+        $order_type = $this->post("order_type");
+        $order_date = $this->post("order_date");
+        $order_time = $this->post("order_time");
+        $order_amount_act = $order_amount;
+        $this->db->where("email", $email);
+        $query = $this->db->get("loyalty_program_join");
+        $user_check = $query->row();
+        if ($user_check) {
+            $contact_no = $user_check->contact_no;
+            $member_id = $user_check->id;
+            $biling_array = array(
+                "member_id" => $member_id,
+                "order_no" => $order_no,
+                "order_from" => $order_from,
+                "order_date" => $order_date,
+                "order_amount" => $order_amount,
+                "email" => $this->post("email"),
+                "contact_no" => $contact_no,
+                "order_time" => $order_time,
+                "order_type" => $order_type,
+                "order_status" => "active",
+                "status" => "credit",
+                "remark" => "Order From Website",
+                "slot_id" => "",
+                "slot_title" => "",
+                "reimburse_id" => "",
+                "debit_reimburse_id" => "",
+                "reimburse_amount" => "0",
+                "reimburse_status" => "false",
+            );
+            $this->db->insert('loyalty_order_billing', $biling_array);
+        }
+    }
+
 }
 
 ?>
