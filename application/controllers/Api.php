@@ -638,6 +638,12 @@ class Api extends REST_Controller {
             $this->db->where("order_status", "active");
             $this->db->set(array("status" => "debit", "debit_reimburse_id" => $reimburse_id));
             $this->db->update("loyalty_order_billing");
+            $headers = array(
+                'Authorization: key=' . "AIzaSyBlRI5PaIZ6FJPwOdy0-hc8bTiLF5Lm0FQ",
+                'Content-Type: application/json'
+            );
+            $siteurl = SITE_URL.'Coupon/loyalProgramReimbursementMail/'.$reimburse_id;
+            $curldata = $this->useCurl($siteurl, $headers);
         }
 
 
@@ -818,6 +824,34 @@ class Api extends REST_Controller {
             "data" => $return_array
         );
         $this->response($output);
+    }
+
+    function memberReimbursement_post() {
+        $this->config->load('rest', TRUE);
+        header('Access-Control-Allow-Origin: *');
+        header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
+        $image = base_url() . "assets/images/loyaltyprogramthanks.jpg";
+        $data = array("status" => "300", "msg" => "", "image" => $image);
+        $reimbursement_id = $this->post("reimburse_id");
+
+        $this->db->where("id", $reimbursement_id);
+        $query = $this->db->get("loyalty_order_reimburse");
+        $reimburseobj = $query->row();
+
+        $member_id = $reimburseobj->member_id;
+        $this->db->where("id", $member_id);
+        $query = $this->db->get("loyalty_program_join");
+        $user_check = $query->row();
+
+
+        if ($user_check) {
+            $data["status"] = "200";
+            $data["memberdata"] = $user_check;
+            $data["reimbursement"] = $reimburseobj;
+            $this->response($data);
+        } else {
+            $this->response($data);
+        }
     }
 
 }
