@@ -642,8 +642,14 @@ class Api extends REST_Controller {
                 'Authorization: key=' . "AIzaSyBlRI5PaIZ6FJPwOdy0-hc8bTiLF5Lm0FQ",
                 'Content-Type: application/json'
             );
-            $siteurl = SITE_URL.'Coupon/loyalProgramReimbursementMail/'.$reimburse_id;
-            $curldata = $this->useCurl($siteurl, $headers);
+            if ($order_from == 'Hello India') {
+                $siteurl = 'https://www.helloindia.com.hk/Coupon/loyalProgramReimbursementMail/' . $reimburse_id;
+                $curldata = $this->useCurl($siteurl, $headers);
+            }
+            if ($order_from == 'Woodland') {
+                $siteurl = 'https://www.woodlandshk.com/Coupon/loyalProgramReimbursementMail/' . $reimburse_id;
+                $curldata = $this->useCurl($siteurl, $headers);
+            }
         }
 
 
