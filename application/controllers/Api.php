@@ -356,13 +356,13 @@ class Api extends REST_Controller {
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = 100.00;
             $temparray['payment_type'] = $pvalue['payment_type'];
-            
+
             $valid_date = $pvalue['valid_from'];
 
             if ($pvalue["use_status"] == 'active') {
-                $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From '.$valid_date.'</p>';
+                $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From ' . $valid_date . '</p>';
             } else {
-                $temparray['edit'] = '<button  class="btn btn-danger" disabled=true><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From '.$valid_date.'</p>';
+                $temparray['edit'] = '<button  class="btn btn-danger" disabled=true><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From ' . $valid_date . '</p>';
             }
 
 
@@ -447,9 +447,9 @@ class Api extends REST_Controller {
             $temparray['s_n'] = ($pkey + 1) + $start;
 
 
+            $valid_date = $pvalue['valid_from'];
 
-
-            $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b>";
+            $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b><br><p>Valid from $valid_date</p>";
 
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = 100.00;
