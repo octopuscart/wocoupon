@@ -284,7 +284,12 @@ class Api extends REST_Controller {
                 $x = ($image_width / 2) - ($text_width / 2);
                 imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
             }
-            $validate = $couponobject->valid_from;
+            $valid_date2 = $couponobject->valid_from;
+            
+            $timestamp = strtotime($valid_date2);
+            $validate = date('dS M Y', $timestamp);
+
+            
             imagettftext($jpg_image, 20, 0, 480, 755, $white, $font_path1, "Your Coupon Code(s), Must be used from $validate");
 // Output the image
             imagejpeg($jpg_image);
@@ -358,6 +363,11 @@ class Api extends REST_Controller {
             $temparray['payment_type'] = $pvalue['payment_type'];
 
             $valid_date = $pvalue['valid_from'];
+            
+            $valid_date2 = $pvalue['valid_from'];
+            $timestamp = strtotime($valid_date2);
+            $valid_date = date('d M Y', $timestamp);
+
 
             if ($pvalue["use_status"] == 'active') {
                 $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From ' . $valid_date . '</p>';
