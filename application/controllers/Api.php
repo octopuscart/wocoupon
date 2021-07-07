@@ -200,9 +200,13 @@ class Api extends REST_Controller {
             }
             $code = $prefix . $code . $id;
             $coupondata['coupon_code'] = $code;
+            $datein = date("Y-m-d");
+            $outputdate = date('Y-m-d', strtotime("$datein +7 day"));
+            $coupondata['valid_from'] = $outputdate;
             $coupondata['coupon_code_hash'] = md5($request_id);
             $this->db->insert("coupon_code", $coupondata);
             $last_id = $this->db->insert_id();
+
             $insertArray = array(
                 "coupon_id" => $last_id,
                 "email" => "",
@@ -227,7 +231,9 @@ class Api extends REST_Controller {
     }
 
     function testRend_get() {
-        echo rand(1000, 9999);
+        $datein = date("Y-m-d");
+        $outputdate = date('Y-m-d', strtotime("$datein +7 day"));
+        echo "" . $outputdate;
     }
 
     function getCouponImage_get($couponcodehas) {
@@ -239,6 +245,7 @@ class Api extends REST_Controller {
         $couponcodearray1 = array();
         $couponcodearray2 = array();
         $couponcodearray3 = array();
+        $couponobject = array();
         foreach ($coupondata as $key => $value) {
             if ($key <= 4) {
                 array_push($couponcodearray1, $value->coupon_code);
@@ -249,6 +256,7 @@ class Api extends REST_Controller {
             if ($key > 9) {
                 array_push($couponcodearray3, $value->coupon_code);
             }
+            $couponobject = $value;
         }
 
 //        unset($couponcodearray3[4]);
@@ -276,7 +284,8 @@ class Api extends REST_Controller {
                 $x = ($image_width / 2) - ($text_width / 2);
                 imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
             }
-            imagettftext($jpg_image, 15, 0, 670, 755, $white, $font_path1, "Your Coupon Code(s)");
+            $validate = $couponobject->valid_from;
+            imagettftext($jpg_image, 15, 0, 480, 755, $white, $font_path1, "Your Coupon Code(s), Must be used from $validate");
 // Output the image
             imagejpeg($jpg_image);
         } else {
