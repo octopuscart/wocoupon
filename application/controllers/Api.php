@@ -360,9 +360,9 @@ class Api extends REST_Controller {
             $valid_date = $pvalue['valid_from'];
 
             if ($pvalue["use_status"] == 'active') {
-                $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button>';
+                $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From '.$valid_date.'</p>';
             } else {
-                $temparray['edit'] = '<button  class="btn btn-danger" disabled=true><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p>'.$valid_date.'</p>';
+                $temparray['edit'] = '<button  class="btn btn-danger" disabled=true><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p> Valid From '.$valid_date.'</p>';
             }
 
 
