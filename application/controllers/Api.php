@@ -285,7 +285,7 @@ class Api extends REST_Controller {
                 imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
             }
             $validate = $couponobject->valid_from;
-            imagettftext($jpg_image, 15, 0, 480, 755, $white, $font_path1, "Your Coupon Code(s), Must be used from $validate");
+            imagettftext($jpg_image, 20, 0, 480, 755, $white, $font_path1, "Your Coupon Code(s), Must be used from $validate");
 // Output the image
             imagejpeg($jpg_image);
         } else {
@@ -314,7 +314,7 @@ class Api extends REST_Controller {
         if ($search) {
             $searchqry = ' and (cc.coupon_code like "%' . $search . '%" or cc.email like "%' . $search . '%" or cc.contact_no like "%' . $search . '%" or cc.name like "%' . $search . '%" ) ';
         }
-        $query = "select cc.* from coupon_code as cc where cc.id not in (select ccs.coupon_id from coupon_code_status as ccs where ccs.status ='Used') $searchqry order by cc.id desc limit  $start, $length";
+        $query = "select cc.*, if(date>valid_from, 'active', 'inactive') as use_status from coupon_code as cc where cc.id not in (select ccs.coupon_id from coupon_code_status as ccs where ccs.status ='Used') $searchqry order by cc.id desc limit  $start, $length";
         $query2 = $this->db->query($query);
         $couponlist = $query2->result_array();
 
@@ -356,7 +356,14 @@ class Api extends REST_Controller {
             $temparray['datetime'] = $pvalue['date'] . " " . $pvalue['time'];
             $temparray['amount'] = 100.00;
             $temparray['payment_type'] = $pvalue['payment_type'];
-            $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button>';
+            
+            $valid_date = $pvalue['valid_from'];
+
+            if ($pvalue["use_status"] == 'active') {
+                $temparray['edit'] = '<button  class="btn btn-danger" ng-click="userCoupon(' . $pvalue['id'] . ')"><i class="fa fa-edit"></i> Reimburse Coupon</button>';
+            } else {
+                $temparray['edit'] = '<button  class="btn btn-danger" disabled=true><i class="fa fa-edit"></i> Reimburse Coupon</button><br/><p>'.$valid_date.'</p>';
+            }
 
 
 
