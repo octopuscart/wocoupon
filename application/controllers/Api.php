@@ -447,7 +447,9 @@ class Api extends REST_Controller {
             $temparray['s_n'] = ($pkey + 1) + $start;
 
 
-            $valid_date = $pvalue['valid_from'];
+            $valid_date2 = $pvalue['valid_from'];
+            $timestamp = strtotime($valid_date2);
+            $valid_date = date('d M Y', $timestamp);
 
             $temparray['coupon_code'] = "<b>" . $pvalue['coupon_code'] . "</b><br><p>Valid from $valid_date</p>";
 
