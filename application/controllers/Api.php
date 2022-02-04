@@ -274,6 +274,9 @@ class Api extends REST_Controller {
             header('Content-type: image/jpeg');
             $font_path1 = APPPATH . "../assets/card/fonts/ABeeZee-Regular.otf";
             $jpg_image = imagecreatefromjpeg(APPPATH . "../assets/images/coupon100.jpg");
+            if ($couponobject->coupon_for == "helloindia") {
+                $jpg_image = imagecreatefromjpeg(APPPATH . "../assets/images/coupon100HL.jpg");
+            }
             $white = imagecolorallocate($jpg_image, 0, 0, 0);
             $useremail = $this->input->get('client_email');
             $image_width = imagesx($jpg_image);
@@ -285,11 +288,11 @@ class Api extends REST_Controller {
                 imagettftext($jpg_image, $font_size, 0, $x + 7, $cvalue['y'], $white, $font_path1, $cvalue['text']);
             }
             $valid_date2 = $couponobject->valid_from;
-            
+
             $timestamp = strtotime($valid_date2);
             $validate = date('dS M Y', $timestamp);
 
-            
+
             imagettftext($jpg_image, 20, 0, 480, 755, $white, $font_path1, "Your Coupon Code(s), Must be used from $validate");
 // Output the image
             imagejpeg($jpg_image);
@@ -363,7 +366,7 @@ class Api extends REST_Controller {
             $temparray['payment_type'] = $pvalue['payment_type'];
 
             $valid_date = $pvalue['valid_from'];
-            
+
             $valid_date2 = $pvalue['valid_from'];
             $timestamp = strtotime($valid_date2);
             $valid_date = date('d M Y', $timestamp);
